@@ -1,169 +1,301 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Platform } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../colors';
+import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
+import AppText from '../components/AppText';
+import ScreenShell from '../components/ScreenShell';
+import SoftCard from '../components/SoftCard';
+import { theme } from '../theme/theme';
+
+type ScanItem = {
+  id: string;
+  title: string;
+  date: string;
+  amount: string;
+  status: 'Processed' | 'Pending';
+  source: 'Camera' | 'Upload';
+  uri?: string;
+};
+
+const initialHistory: ScanItem[] = [
+  {
+    id: 'doc-1',
+    title: 'Invoice - Market Supplies',
+    date: '22 Apr 2026',
+    amount: '1,120 MAD',
+    status: 'Processed',
+    source: 'Camera',
+  },
+  {
+    id: 'doc-2',
+    title: 'Transportation Receipt',
+    date: '20 Apr 2026',
+    amount: '260 MAD',
+    status: 'Processed',
+    source: 'Upload',
+  },
+  {
+    id: 'doc-3',
+    title: 'Packaging Expense',
+    date: '18 Apr 2026',
+    amount: '410 MAD',
+    status: 'Pending',
+    source: 'Camera',
+  },
+];
 
 const ScanScreen = () => {
-  const [image, setImage] = useState<string | null>(null);
-  const [extractedData, setExtractedData] = useState<any>(null);
+  const [lastImage, setLastImage] = useState<string | null>(null);
+  const [history, setHistory] = useState<ScanItem[]>(initialHistory);
 
-  const pickImage = async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert('غير مدعوم', 'أداة اختيار الصور غير متوفرة على الويب');
+  const stats = useMemo(() => {
+    const processed = history.filter((item) => item.status === 'Processed').length;
+    return { total: history.length, processed };
+  }, [history]);
+
+  const handleScan = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (permission.status !== 'granted') {
+      Alert.alert('Camera Permission', 'Please allow camera access to scan documents.');
       return;
     }
 
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('إذن مطلوب', 'أذونات مكتبة الوسائط مطلوبة!');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      allowsEditing: true,
+      quality: 0.9,
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
-      // Mock extracted data
-      setExtractedData({
-        amount: '150 درهم',
-        date: '2024-04-22',
-        type: 'فاتورة شراء',
+      const now = new Date();
+      const formatted = now.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
       });
+
+      setLastImage(result.assets[0].uri);
+      setHistory((current) => [
+        {
+          id: `${now.getTime()}`,
+          title: 'New Scanned Document',
+          date: formatted,
+          amount: '0 MAD',
+          status: 'Pending',
+          source: 'Camera',
+          uri: result.assets[0].uri,
+        },
+        ...current,
+      ]);
     }
   };
 
-  const history = [
-    { id: 1, amount: '200 درهم', date: '2024-04-20', type: 'فاتورة بيع' },
-    { id: 2, amount: '50 درهم', date: '2024-04-18', type: 'فاتورة خدمات' },
-  ];
-
   return (
-    <ScrollView style={styles.container}>
+    <ScreenShell contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>مسح الفاتورة</Text>
+        <AppText size={30} weight="bold">
+          Scan Center
+        </AppText>
+        <AppText size={16} color={`${theme.colors.deepContrast}AA`}>
+          Capture your document and keep all scanned records organized.
+        </AppText>
       </View>
 
-      <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-        <Ionicons name="camera" size={50} color={colors.white} />
-        <Text style={styles.uploadText}>📷 مسح الفاتورة</Text>
-      </TouchableOpacity>
+      <SoftCard style={styles.scanCard}>
+        <Pressable
+          onPress={handleScan}
+          style={({ pressed }) => [styles.scanButton, pressed && styles.scanButtonPressed]}
+        >
+          <MaterialCommunityIcons name="camera-outline" size={42} color="#FFFFFF" />
+          <AppText size={24} weight="bold" color="#FFFFFF" align="center">
+            Scan Document
+          </AppText>
+          <AppText size={14} color="#FFFFFFD9" align="center">
+            Tap to open the camera
+          </AppText>
+        </Pressable>
 
-      {image && (
-        <View style={styles.previewContainer}>
-          <Text style={styles.sectionTitle}>معاينة الصورة</Text>
-          <Image source={{ uri: image }} style={styles.image} />
+        <View style={styles.scanStats}>
+          <View style={styles.scanStatsItem}>
+            <AppText size={14} color={`${theme.colors.deepContrast}B3`}>
+              Total Scanned
+            </AppText>
+            <AppText size={22} weight="bold">
+              {stats.total}
+            </AppText>
+          </View>
+          <View style={styles.scanStatsItem}>
+            <AppText size={14} color={`${theme.colors.deepContrast}B3`}>
+              Processed
+            </AppText>
+            <AppText size={22} weight="bold" color={theme.colors.primaryAction}>
+              {stats.processed}
+            </AppText>
+          </View>
         </View>
-      )}
+      </SoftCard>
 
-      {extractedData && (
-        <View style={styles.dataContainer}>
-          <Text style={styles.sectionTitle}>البيانات المستخرجة</Text>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>المبلغ:</Text>
-            <Text style={styles.dataValue}>{extractedData.amount}</Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>التاريخ:</Text>
-            <Text style={styles.dataValue}>{extractedData.date}</Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>النوع:</Text>
-            <Text style={styles.dataValue}>{extractedData.type}</Text>
+      {lastImage ? (
+        <SoftCard style={styles.previewCard}>
+          <AppText size={18} weight="semiBold">
+            Last Scan Preview
+          </AppText>
+          <Image source={{ uri: lastImage }} style={styles.previewImage} />
+        </SoftCard>
+      ) : null}
+
+      <View style={styles.historySection}>
+        <View style={styles.historyHeader}>
+          <AppText size={23} weight="bold">
+            Scan History
+          </AppText>
+          <View style={styles.filterPill}>
+            <MaterialCommunityIcons name="history" size={15} color={theme.colors.deepContrast} />
+            <AppText size={13} weight="semiBold">
+              Recent
+            </AppText>
           </View>
         </View>
-      )}
 
-      <View style={styles.historyContainer}>
-        <Text style={styles.sectionTitle}>الوثائق المحللة</Text>
-        {history.map((item) => (
-          <View key={item.id} style={styles.historyItem}>
-            <Text style={styles.historyText}>{item.type} - {item.amount} - {item.date}</Text>
-          </View>
-        ))}
+        <View style={styles.historyList}>
+          {history.map((item) => (
+            <SoftCard key={item.id} style={styles.historyItem}>
+              <View style={styles.itemIcon}>
+                <MaterialCommunityIcons
+                  name={item.status === 'Processed' ? 'file-check-outline' : 'file-clock-outline'}
+                  size={24}
+                  color={theme.colors.primaryAction}
+                />
+              </View>
+              <View style={styles.itemContent}>
+                <AppText size={18} weight="semiBold">
+                  {item.title}
+                </AppText>
+                <AppText size={14} color={`${theme.colors.deepContrast}B3`}>
+                  {item.date} • {item.source}
+                </AppText>
+              </View>
+              <View style={styles.itemMeta}>
+                <AppText size={16} weight="bold">
+                  {item.amount}
+                </AppText>
+                <View
+                  style={[
+                    styles.statusPill,
+                    item.status === 'Processed' ? styles.statusProcessed : styles.statusPending,
+                  ]}
+                >
+                  <AppText
+                    size={12}
+                    weight="semiBold"
+                    color={item.status === 'Processed' ? '#2D7A35' : '#8A5B20'}
+                  >
+                    {item.status}
+                  </AppText>
+                </View>
+              </View>
+            </SoftCard>
+          ))}
+        </View>
       </View>
-    </ScrollView>
+    </ScreenShell>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.sand,
-    padding: 20,
+  content: {
+    paddingTop: theme.spacing.item,
   },
   header: {
+    gap: 6,
+  },
+  scanCard: {
+    gap: 16,
+  },
+  scanButton: {
+    minHeight: 176,
+    borderRadius: 24,
     alignItems: 'center',
-    marginBottom: 30,
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: theme.colors.primaryAction,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.sea,
+  scanButtonPressed: {
+    opacity: 0.88,
   },
-  uploadButton: {
-    backgroundColor: colors.terracotta,
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    marginBottom: 30,
+  scanStats: {
+    flexDirection: 'row',
+    gap: 10,
   },
-  uploadText: {
-    color: colors.white,
-    fontSize: 20,
-    marginTop: 10,
+  scanStatsItem: {
+    flex: 1,
+    backgroundColor: '#F8F3ED',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  previewContainer: {
-    marginBottom: 30,
+  previewCard: {
+    gap: 10,
   },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.sea,
-    marginBottom: 15,
-    textAlign: 'right',
-  },
-  image: {
+  previewImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 15,
+    height: 220,
+    borderRadius: 18,
   },
-  dataContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 30,
+  historySection: {
+    gap: 12,
   },
-  dataRow: {
+  historyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
   },
-  dataLabel: {
-    fontSize: 16,
-    color: colors.sea,
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ECE4DA',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  dataValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.terracotta,
-  },
-  historyContainer: {
-    marginTop: 20,
+  historyList: {
+    gap: 10,
   },
   historyItem: {
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 22,
   },
-  historyText: {
-    fontSize: 16,
-    color: colors.sea,
-    textAlign: 'right',
+  itemIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8EDE8',
+  },
+  itemContent: {
+    flex: 1,
+    gap: 1,
+  },
+  itemMeta: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  statusPill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusProcessed: {
+    backgroundColor: '#EAF6EE',
+  },
+  statusPending: {
+    backgroundColor: '#FBEEDB',
   },
 });
 

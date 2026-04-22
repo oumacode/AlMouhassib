@@ -1,71 +1,132 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../colors';
+import React, { useMemo, useState } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, View } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
-import ScanScreen from '../screens/ScanScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ScanScreen from '../screens/ScanScreen';
+import { theme } from '../theme/theme';
+import AppText from '../components/AppText';
 
-export type RootTabParamList = {
-  Home: undefined;
-  Scan: undefined;
-  Profile: undefined;
-};
+type TabKey = 'Home' | 'Scan' | 'Profile';
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+const tabs: {
+  key: TabKey;
+  label: string;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  activeIcon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+}[] = [
+  {
+    key: 'Home',
+    label: 'Home',
+    icon: 'view-dashboard-outline',
+    activeIcon: 'view-dashboard',
+  },
+  {
+    key: 'Scan',
+    label: 'Scan',
+    icon: 'camera-outline',
+    activeIcon: 'camera',
+  },
+  {
+    key: 'Profile',
+    label: 'Profile',
+    icon: 'account-circle-outline',
+    activeIcon: 'account-circle',
+  },
+];
 
 const AppNavigator = () => {
+  const [activeTab, setActiveTab] = useState<TabKey>('Home');
+
+  const content = useMemo(() => {
+    if (activeTab === 'Home') {
+      return <HomeScreen onNavigate={setActiveTab} />;
+    }
+
+    if (activeTab === 'Scan') {
+      return <ScanScreen />;
+    }
+
+    return <ProfileScreen />;
+  }, [activeTab]);
+
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: any;
+    <View style={styles.root}>
+      <View style={styles.content}>{content}</View>
 
-            if (route.name === 'Home') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Scan') {
-              iconName = focused ? 'camera' : 'camera-outline';
-            } else if (route.name === 'Profile') {
-              iconName = focused ? 'person' : 'person-outline';
-            }
+      <View style={styles.tabBar}>
+        {tabs.map((tab) => {
+          const focused = activeTab === tab.key;
 
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: colors.terracotta,
-          tabBarInactiveTintColor: colors.sea,
-          tabBarStyle: {
-            backgroundColor: colors.white,
-            borderTopColor: colors.sand,
-          },
-          headerStyle: {
-            backgroundColor: colors.sand,
-          },
-          headerTintColor: colors.sea,
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              style={({ pressed }) => [
+                styles.tabItem,
+                focused && styles.tabItemActive,
+                pressed && styles.tabItemPressed,
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={focused ? tab.activeIcon : tab.icon}
+                size={24}
+                color={focused ? '#FFFFFF' : `${theme.colors.deepContrast}80`}
+              />
+              <AppText
+                size={12}
+                weight="semiBold"
+                align="center"
+                color={focused ? '#FFFFFF' : `${theme.colors.deepContrast}80`}
+              >
+                {tab.label}
+              </AppText>
+            </Pressable>
+          );
         })}
-      >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ title: 'الرئيسية' }}
-        />
-        <Tab.Screen
-          name="Scan"
-          component={ScanScreen}
-          options={{ title: 'المسح' }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ title: 'الملف الشخصي' }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+  },
+  tabBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 14,
+    height: 74,
+    borderRadius: 24,
+    backgroundColor: '#FFFDFB',
+    borderWidth: 1,
+    borderColor: '#EADBCD',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    ...theme.shadow,
+  },
+  tabItem: {
+    flex: 1,
+    height: 56,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  tabItemActive: {
+    backgroundColor: theme.colors.primaryAction,
+  },
+  tabItemPressed: {
+    opacity: 0.82,
+  },
+});
 
 export default AppNavigator;

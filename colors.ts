@@ -1,10 +1,8 @@
 export const colors = {
-  terracotta: '#C0603E',
-  sand: '#E6D3B3',
-  olive: '#6B6B3E',
-  ochre: '#D4A24C',
-  clay: '#B5653A',
-  sea: '#2F5D62',
+  terracotta: '#DF5022',
+  sand: '#F5F2E6',
+  olive: '#C09B7C',
+  ochre: '#C09B7C',
+  sea: '#4B3A31',
   white: '#FFFFFF',
-  nearBlack: '#1A1A1A',
 };

@@ -1,125 +1,314 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { colors } from '../../colors';
-import { RootTabParamList } from '../navigation/AppNavigator';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, View } from 'react-native';
+import AppText from '../components/AppText';
+import ScreenShell from '../components/ScreenShell';
+import SoftCard from '../components/SoftCard';
+import { theme } from '../theme/theme';
 
-type HomeScreenNavigationProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
+type TabKey = 'Home' | 'Scan' | 'Profile';
 
-const HomeScreen = ({ navigation }: { navigation: HomeScreenNavigationProp }) => {
-  const userName = 'أحمد'; // Placeholder name
+type HomeScreenProps = {
+  onNavigate?: (tab: TabKey) => void;
+};
 
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+type StatCard = {
+  title: string;
+  value: string;
+  delta: string;
+  icon: IconName;
+  tone: string;
+};
+
+type QuickAction = {
+  title: string;
+  icon: IconName;
+  action: TabKey;
+};
+
+const chartBars = [11, 16, 21, 15, 24, 31, 28, 38];
+
+const stats: StatCard[] = [
+  { title: 'Revenus', value: '45,000 MAD', delta: '+15%', icon: 'cash-plus', tone: '#EAF6EE' },
+  { title: 'Dépenses', value: '12,500 MAD', delta: '-4%', icon: 'cash-minus', tone: '#FCECE7' },
+  { title: 'Résultat', value: '32,500 MAD', delta: '+9%', icon: 'chart-line', tone: '#EFE8E1' },
+  { title: 'Factures', value: '24 docs', delta: '+3', icon: 'file-document-outline', tone: '#F8F3EC' },
+];
+
+const quickActions: QuickAction[] = [
+  { title: 'Scan', icon: 'camera-outline', action: 'Scan' },
+  { title: 'Add Expense', icon: 'plus-circle-outline', action: 'Home' },
+  { title: 'Cash Flow', icon: 'chart-bar', action: 'Home' },
+  { title: 'Profile', icon: 'account-cog-outline', action: 'Profile' },
+];
+
+const HomeScreen = ({ onNavigate }: HomeScreenProps) => {
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.greeting}>السلام عليكم، {userName}</Text>
+    <ScreenShell contentContainerStyle={styles.content}>
+      <View style={styles.hero}>
+        <View style={styles.heroTop}>
+          <Pressable style={styles.iconButton}>
+            <MaterialCommunityIcons name="menu" size={22} color={theme.colors.deepContrast} />
+          </Pressable>
+          <AppText size={34} weight="bold" color={theme.colors.primaryAction}>
+            Almohassib
+          </AppText>
+          <View style={styles.rightIcons}>
+            <Pressable style={styles.iconButton}>
+              <MaterialCommunityIcons
+                name="tune-variant"
+                size={20}
+                color={theme.colors.deepContrast}
+              />
+            </Pressable>
+            <Pressable style={styles.iconButton}>
+              <MaterialCommunityIcons
+                name="bell-outline"
+                size={20}
+                color={theme.colors.deepContrast}
+              />
+            </Pressable>
+          </View>
+        </View>
+        <AppText size={29} weight="bold">
+          Welcome back, Salma
+        </AppText>
+        <AppText size={16} color={`${theme.colors.deepContrast}AA`}>
+          Your cooperative is moving in a healthy direction.
+        </AppText>
       </View>
 
-      <View style={styles.cardsContainer}>
-        <View style={styles.card}>
-          <Ionicons name="wallet" size={40} color={colors.olive} />
-          <Text style={styles.cardTitle}>الدخل</Text>
-          <Text style={styles.cardValue}>5000 درهم</Text>
+      <SoftCard style={styles.dashboardCard}>
+        <View style={styles.dashboardHead}>
+          <AppText size={24} weight="bold">
+            Dashboard
+          </AppText>
+          <View style={styles.monthChip}>
+            <AppText size={15} weight="semiBold" color={theme.colors.deepContrast}>
+              Mai
+            </AppText>
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={20}
+              color={theme.colors.deepContrast}
+            />
+          </View>
         </View>
-        <View style={styles.card}>
-          <Ionicons name="card" size={40} color={colors.terracotta} />
-          <Text style={styles.cardTitle}>المصروفات</Text>
-          <Text style={styles.cardValue}>3000 درهم</Text>
+        <View style={styles.chartArea}>
+          {[0, 1, 2, 3].map((line) => (
+            <View key={line} style={styles.gridLine} />
+          ))}
+          <View style={styles.barRow}>
+            {chartBars.map((value, index) => (
+              <View key={`${value}-${index}`} style={styles.barWrap}>
+                <View style={[styles.bar, { height: `${value * 2}%` }]} />
+              </View>
+            ))}
+          </View>
         </View>
-        <View style={styles.card}>
-          <Ionicons name="trending-up" size={40} color={colors.ochre} />
-          <Text style={styles.cardTitle}>الربح</Text>
-          <Text style={styles.cardValue}>2000 درهم</Text>
+      </SoftCard>
+
+      <View style={styles.sectionBlock}>
+        <AppText size={23} weight="bold">
+          4 Important Statistics
+        </AppText>
+        <View style={styles.statsGrid}>
+          {stats.map((item) => (
+            <SoftCard key={item.title} style={styles.statCard}>
+              <View style={styles.statHead}>
+                <View style={[styles.statIconWrap, { backgroundColor: item.tone }]}>
+                  <MaterialCommunityIcons
+                    name={item.icon}
+                    size={21}
+                    color={theme.colors.primaryAction}
+                  />
+                </View>
+                <AppText size={14} weight="semiBold" color={theme.colors.primaryAction}>
+                  {item.delta}
+                </AppText>
+              </View>
+              <AppText size={16} color={`${theme.colors.deepContrast}B3`}>
+                {item.title}
+              </AppText>
+              <AppText size={24} weight="bold">
+                {item.value}
+              </AppText>
+            </SoftCard>
+          ))}
         </View>
       </View>
 
-      <View style={styles.actionsContainer}>
-        <Text style={styles.sectionTitle}>إجراءات سريعة</Text>
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Scan')}>
-            <Ionicons name="camera" size={30} color={colors.white} />
-            <Text style={styles.actionText}>مسح</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => {/* Open chatbot */}}>
-            <Ionicons name="chatbubble" size={30} color={colors.white} />
-            <Text style={styles.actionText}>اسأل</Text>
-          </TouchableOpacity>
+      <SoftCard style={styles.quickActionsCard}>
+        <View style={styles.quickHeader}>
+          <AppText size={23} weight="bold">
+            Quick Actions
+          </AppText>
+          <MaterialCommunityIcons name="flash-outline" size={24} color={theme.colors.primaryAction} />
         </View>
-      </View>
-    </ScrollView>
+        <View style={styles.quickGrid}>
+          {quickActions.map((action) => (
+            <Pressable
+              key={action.title}
+              onPress={() => onNavigate?.(action.action)}
+              style={({ pressed }) => [styles.quickItem, pressed && styles.quickPressed]}
+            >
+              <View style={styles.quickIconWrap}>
+                <MaterialCommunityIcons
+                  name={action.icon}
+                  size={24}
+                  color={theme.colors.primaryAction}
+                />
+              </View>
+              <AppText size={15} weight="semiBold" align="center">
+                {action.title}
+              </AppText>
+            </Pressable>
+          ))}
+        </View>
+      </SoftCard>
+    </ScreenShell>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.sand,
-    padding: 20,
+  content: {
+    paddingTop: theme.spacing.item,
   },
-  header: {
-    marginBottom: 30,
+  hero: {
+    gap: 6,
   },
-  greeting: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.sea,
-    textAlign: 'right',
-  },
-  cardsContainer: {
+  heroTop: {
     flexDirection: 'row',
-    marginBottom: 40,
-  },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 15,
-    padding: 20,
     alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-    shadowColor: colors.sea,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
-  cardTitle: {
-    fontSize: 16,
-    color: colors.sea,
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  cardValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.terracotta,
-    marginTop: 5,
-  },
-  actionsContainer: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.sea,
-    marginBottom: 20,
-    textAlign: 'right',
-  },
-  actionsRow: {
+  rightIcons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: 8,
   },
-  actionButton: {
-    backgroundColor: colors.olive,
-    borderRadius: 15,
-    padding: 20,
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
     alignItems: 'center',
-    width: 120,
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFFCC',
   },
-  actionText: {
-    color: colors.white,
-    fontSize: 16,
-    marginTop: 10,
+  dashboardCard: {
+    gap: 14,
+  },
+  dashboardHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  monthChip: {
+    minWidth: 88,
+    height: 36,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    backgroundColor: '#F5F2E6',
+  },
+  chartArea: {
+    minHeight: 180,
+    borderRadius: 18,
+    backgroundColor: '#FDFCF8',
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  gridLine: {
+    borderTopWidth: 1,
+    borderTopColor: '#C09B7C4D',
+  },
+  barRow: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  barWrap: {
+    flex: 1,
+    height: 120,
+    justifyContent: 'flex-end',
+  },
+  bar: {
+    width: '100%',
+    borderRadius: 10,
+    minHeight: 22,
+    backgroundColor: theme.colors.primaryAction,
+  },
+  sectionBlock: {
+    gap: 12,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -6,
+  },
+  statCard: {
+    width: '50%',
+    padding: 14,
+    gap: 6,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F2E7DA',
+  },
+  statHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickActionsCard: {
+    gap: 14,
+  },
+  quickHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  quickGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -6,
+  },
+  quickItem: {
+    width: '50%',
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+    alignItems: 'center',
+    gap: 8,
+  },
+  quickIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F2E6',
+    borderWidth: 1,
+    borderColor: '#E6D5C4',
+  },
+  quickPressed: {
+    opacity: 0.72,
   },
 });
 
