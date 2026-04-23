@@ -12,7 +12,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Almohassib uses the camera to capture invoices and receipts.",
+        "NSPhotoLibraryUsageDescription": "Almohassib uses your photo library to import financial documents.",
+        "NSPhotoLibraryAddUsageDescription": "Almohassib can save processed document previews when needed."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,10 +25,24 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Almohassib needs camera access to scan accounting documents.",
+          "photosPermission": "Almohassib needs photo library access to import accounting documents."
+        }
+      ]
+    ]
   }
 }
